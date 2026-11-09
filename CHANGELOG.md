@@ -4,8 +4,7 @@
 
 - Documentation uses made-up Bluetooth addresses instead of real ones.
 - README: what the service changes and the trade-offs (accidental wake-ups, power in
-  suspend), what stays set after uninstalling, and removing addresses from logs
-  before sharing them.
+  suspend), what stays set after uninstalling.
 - The installer warns clearly if the service did not start.
 
 ## 0.1.0 - 2026-11-08

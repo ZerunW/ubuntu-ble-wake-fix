@@ -95,12 +95,6 @@ Removing the package stops the service but does not clear what it already set: t
 Remote Wakeup flags stay until bluetoothd or the controller restarts
 (`sudo systemctl restart bluetooth`), and USB wakeup stays until the next reboot.
 
-## Sharing logs
-
-`journalctl -u ubuntu-ble-wake-fix` and `--check` print the Bluetooth addresses and
-names of your devices. Replace the addresses (for example with `C0:FF:EE:00:00:01`)
-before posting them in an issue.
-
 ## Why this is needed
 
 Details, btmon evidence and the two BlueZ bugs are in

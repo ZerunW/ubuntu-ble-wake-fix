@@ -56,11 +56,6 @@ sudo apt remove ubuntu-ble-wake-fix   # 或者 apt purge，会连排除列表一
 卸载会停止服务，但不会撤销它已经设置的东西：远程唤醒标记会保留到 bluetoothd 或蓝牙控制器重启
 （`sudo systemctl restart bluetooth`），USB 唤醒会保留到下次重启电脑。
 
-## 分享日志
-
-`journalctl -u ubuntu-ble-wake-fix` 和 `--check` 的输出里有你设备的蓝牙地址和名称。
-在 issue 里贴出来之前，请把地址换掉（比如换成 `C0:FF:EE:00:00:01`）。
-
 ## 原理
 
 详见 [docs/how-it-works.md](docs/how-it-works.md)（英文，包括 btmon 记录和 BlueZ 的两个 bug）。
