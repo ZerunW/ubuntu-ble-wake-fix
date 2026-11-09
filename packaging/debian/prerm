@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+if { [ "$1" = remove ] || [ "$1" = deconfigure ]; } && command -v systemctl >/dev/null; then
+	systemctl disable --now ubuntu-ble-wake-fix.service || true
+fi
+if [ "$1" = upgrade ] && command -v systemctl >/dev/null; then
+	systemctl stop ubuntu-ble-wake-fix.service || true
+fi
+exit 0

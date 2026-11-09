@@ -1,0 +1,31 @@
+Description: allow wake for RPA devices when the kernel has LL Privacy
+ BlueZ 5.72 only enables wake support for devices that use a resolvable
+ private address when the kernel experimental feature "RPA resolution"
+ (15c0a148-c273-11ea-b3de-0242ac130004) is on, because otherwise the device
+ cannot be programmed in the controller accept list.
+ Newer kernels (e.g. 7.0) no longer have that experimental feature: when the
+ controller supports LL Privacy the kernel uses it automatically and reports
+ MGMT_SETTING_LL_PRIVACY. Accept that setting as well, so Bluetooth LE
+ keyboards and mice with privacy addresses can wake the host again.
+ The check still refuses wake when neither is available.
+Author: Zerun Wang <213201277+ZerunW@users.noreply.github.com>
+Forwarded: not-needed (upstream master dropped the check)
+---
+--- a/src/device.c
++++ b/src/device.c
+@@ -1505,8 +1505,14 @@
+ 
++#ifndef MGMT_SETTING_LL_PRIVACY
++#define MGMT_SETTING_LL_PRIVACY		BIT(22)
++#endif
++
+ void device_set_wake_support(struct btd_device *device, bool wake_support)
+ {
+ 	if (device->rpa && !btd_adapter_has_exp_feature(device->adapter,
+-						EXP_FEAT_RPA_RESOLUTION)) {
++						EXP_FEAT_RPA_RESOLUTION) &&
++			!btd_adapter_has_settings(device->adapter,
++						MGMT_SETTING_LL_PRIVACY)) {
+ 		warn("Unable to set wake_support without RPA resolution");
+ 		return;
+ 	}

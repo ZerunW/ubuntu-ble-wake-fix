@@ -1,0 +1,31 @@
+[Unit]
+Description=Let paired Bluetooth (BLE) keyboards and mice wake the system
+Documentation=https://github.com/ZerunW/ubuntu-ble-wake-fix
+After=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/ubuntu-ble-wake-fix
+Restart=always
+RestartSec=5
+# Needs root (bluetooth storage is root-only) and CAP_NET_ADMIN (trusted
+# Bluetooth management socket). Writes only sysfs power/wakeup files.
+CapabilityBoundingSet=CAP_NET_ADMIN
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectClock=yes
+ProtectHostname=yes
+ReadOnlyPaths=/var/lib/bluetooth
+RestrictAddressFamilies=AF_BLUETOOTH AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=bluetooth.target

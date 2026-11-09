@@ -1,0 +1,108 @@
+Description: keep Remote Wakeup when setting Device Privacy Mode
+ After Add Device, bluetoothd first sets Remote Wakeup, then sets Device
+ Privacy Mode with flags taken from current_flags. The wake request has not
+ been recorded in current_flags (the kernel does not send Device Flags
+ Changed back to the socket that set them), so the privacy request carries
+ 0x2 only and the kernel, which replaces the whole value, drops Remote
+ Wakeup. LE keyboards then can't wake the host from suspend although
+ WakeAllowed reads true. Seen with btmon on kernel 7.0 / BlueZ 5.72.
+ Record the wake flag on completion and include a pending wake change in
+ the privacy request (same idea as upstream's pending_flags handling).
+Author: Zerun Wang <213201277+ZerunW@users.noreply.github.com>
+Forwarded: not-needed (fixed differently upstream)
+---
+--- a/src/device.c
++++ b/src/device.c
+@@ -1575,6 +1575,15 @@
+ 		return;
+ 	}
+ 
++	/* The kernel does not send Device Flags Changed to the socket that set
++	 * the flags, so record the new value here; otherwise a later Set Device
++	 * Flags built from current_flags clears Remote Wakeup again.
++	 */
++	if (dev->pending_wake_allowed)
++		dev->current_flags |= DEVICE_FLAG_REMOTE_WAKEUP;
++	else
++		dev->current_flags &= ~DEVICE_FLAG_REMOTE_WAKEUP;
++
+ 	device_set_wake_allowed_complete(dev);
+ }
+ 
+@@ -7148,6 +7157,24 @@
+ 	return dev->current_flags;
+ }
+ 
++/* Flags the kernel will hold once a pending wake change has completed. */
++uint32_t btd_device_get_pending_flags(struct btd_device *dev)
++{
++	uint32_t flags = dev->current_flags;
++
++	if (dev->pending_wake_allowed)
++		flags |= DEVICE_FLAG_REMOTE_WAKEUP;
++	else
++		flags &= ~DEVICE_FLAG_REMOTE_WAKEUP;
++
++	return flags;
++}
++
++void btd_device_add_current_flags(struct btd_device *dev, uint32_t flags)
++{
++	dev->current_flags |= flags;
++}
++
+ uint32_t btd_device_get_supported_flags(struct btd_device *dev)
+ {
+ 	return dev->supported_flags;
+--- a/src/device.h
++++ b/src/device.h
+@@ -183,6 +183,8 @@
+ int btd_device_connect_services(struct btd_device *dev, GSList *services);
+ 
+ uint32_t btd_device_get_current_flags(struct btd_device *dev);
++uint32_t btd_device_get_pending_flags(struct btd_device *dev);
++void btd_device_add_current_flags(struct btd_device *dev, uint32_t flags);
+ uint32_t btd_device_get_supported_flags(struct btd_device *dev);
+ void btd_device_flags_changed(struct btd_device *dev, uint32_t supported_flags,
+ 			      uint32_t current_flags);
+--- a/src/adapter.c
++++ b/src/adapter.c
+@@ -5558,6 +5558,7 @@
+ 					 const void *param, void *user_data)
+ {
+ 	const struct mgmt_rp_set_device_flags *rp = param;
++	struct btd_device *dev = user_data;
+ 
+ 	if (status != MGMT_STATUS_SUCCESS) {
+ 		error("Set device flags return status: %s",
+@@ -5569,6 +5570,9 @@
+ 		error("Too small Set Device Flags complete event: %d", length);
+ 		return;
+ 	}
++
++	if (dev)
++		btd_device_add_current_flags(dev, DEVICE_FLAG_DEVICE_PRIVACY);
+ }
+ 
+ static void add_device_complete(uint8_t status, uint16_t length,
+@@ -5607,14 +5611,18 @@
+ 	DBG("%s (%u) added to kernel connect list", addr, rp->addr.type);
+ 
+ 	if (btd_opts.device_privacy) {
+-		uint32_t flags = btd_device_get_current_flags(dev);
++		/* Include a pending Remote Wakeup change: the kernel replaces
++		 * all flags, so building this from current_flags alone would
++		 * clear the wake flag that was just set.
++		 */
++		uint32_t flags = btd_device_get_pending_flags(dev);
+ 
+ 		/* Set Device Privacy Mode has not set the flag yet. */
+ 		if (!(flags & DEVICE_FLAG_DEVICE_PRIVACY)) {
+ 			adapter_set_device_flags(adapter, dev, flags |
+ 						DEVICE_FLAG_DEVICE_PRIVACY,
+ 						set_device_privacy_complete,
+-						NULL);
++						dev);
+ 		}
+ 	}
+ }

@@ -1,0 +1,15 @@
+[package]
+name = "ubuntu-ble-wake-fix"
+version = "0.1.1"
+edition = "2021"
+license = "GPL-2.0-or-later"
+description = "Fix for Ubuntu: Bluetooth LE keyboards and mice can't wake the computer from suspend"
+repository = "https://github.com/ZerunW/ubuntu-ble-wake-fix"
+readme = "README.md"
+
+[dependencies]
+libc = "0.2"
+
+[profile.release]
+opt-level = 2
+strip = true

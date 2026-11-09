@@ -1,0 +1,13 @@
+/target/
+/out/
+# Bluetooth captures and storage contain pairing keys: never commit them
+*.btsnoop
+*.pcap
+*.pcapng
+*.log
+bt-captures*/
+info
+*.pem
+*.key
+.env
+.env.*

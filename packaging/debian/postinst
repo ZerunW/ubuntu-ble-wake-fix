@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+if [ "$1" = configure ] && command -v systemctl >/dev/null; then
+	systemctl daemon-reload || true
+	systemctl enable ubuntu-ble-wake-fix.service || true
+	systemctl restart ubuntu-ble-wake-fix.service || true
+	if systemctl is-active --quiet ubuntu-ble-wake-fix.service; then
+		echo "ubuntu-ble-wake-fix is running. Check it with: sudo ubuntu-ble-wake-fix --check"
+	else
+		cat >&2 <<'MSG'
+
+************************************************************************
+ubuntu-ble-wake-fix: the service is NOT running, so Bluetooth devices
+will not be kept able to wake the system. See why with:
+  journalctl -u ubuntu-ble-wake-fix -n 30
+************************************************************************
+MSG
+	fi
+fi
+exit 0

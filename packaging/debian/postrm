@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+if [ "$1" = remove ] || [ "$1" = purge ]; then
+	command -v systemctl >/dev/null && systemctl daemon-reload || true
+	echo "ubuntu-ble-wake-fix removed. Wake flags already set stay until bluetoothd or the controller restarts; USB wakeup stays until reboot."
+fi
+exit 0
